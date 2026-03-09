@@ -1,4 +1,6 @@
+using BrcDashboard.Server.Data;
 using BrcDashboard.Server.BusinessLogic;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -18,6 +20,7 @@ builder.Services.AddCors(options =>
     });
 });
 builder.Services.AddSingleton<InvoiceService>();
+builder.Services.AddSingleton<InvoiceRepo>();
 
 var app = builder.Build();
 

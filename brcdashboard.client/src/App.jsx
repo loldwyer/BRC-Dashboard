@@ -14,20 +14,20 @@ import {
 } from "@mui/material";
 
 export default function App() {
-    const [forecastData, setForecastData] = useState([]);
+    const [invoiceData, setInvoiceData] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
 
     useEffect(() => {
-        fetch("http://localhost:5142/weatherforecast") //find in server properties -> applicationUrl for https in launchSettings.json
+        fetch("http://localhost:5142/api/invoices") //find in server properties -> applicationUrl for https in launchSettings.json
             .then((response) => {
                 if (!response.ok) {
-                    throw new Error("Failed to fetch data from the API.");  
+                    throw new Error("Failed to fetch invoice data from the API.");  
                 }
                 return response.json();
             })
             .then((data) => {
-                setForecastData(data);
+                setInvoiceData(data);
                 setLoading(false);
             })
             .catch((err) => {
@@ -35,6 +35,8 @@ export default function App() {
                 setLoading(false);
             });
     }, []);
+    const totalRevenue = invoiceData.reduce((total, item) => total + item.amount, 0);
+    const uniqueCustomers = new Set(invoiceData.map((item) => item.customer_name)).size;
 
     return (
         <>
@@ -49,28 +51,28 @@ export default function App() {
                     <Grid item xs={12} md={4}>
                         <Paper sx={{ p: 3 }}>
                             <Typography variant="h6">Invoices</Typography>
-                            <Typography>Total invoices: 124</Typography>
+                            <Typography>Total invoices: {invoiceData.length}</Typography>
                         </Paper>
                     </Grid>
 
                     <Grid item xs={12} md={4}>
                         <Paper sx={{ p: 3 }}>
                             <Typography variant="h6">Customers</Typography>
-                            <Typography>Total customers: 58</Typography>
+                            <Typography>Total customers: {uniqueCustomers}</Typography>
                         </Paper>
                     </Grid>
 
                     <Grid item xs={12} md={4}>
                         <Paper sx={{ p: 3 }}>
                             <Typography variant="h6">Revenue</Typography>
-                            <Typography>€12,450</Typography>
+                            <Typography>EURO {totalRevenue}</Typography>
                         </Paper>
                     </Grid>
 
                     <Grid item xs={12}>
                         <Paper sx={{ p: 3 }}>
                             <Typography variant="h6" sx={{ mb: 2 }}>
-                                ASP.NET Core API Data
+                                Invoice API Data
                             </Typography>
 
                             {loading && <CircularProgress />}
@@ -79,11 +81,11 @@ export default function App() {
 
                             {!loading && !error && (
                                 <List>
-                                    {forecastData.map((item, index) => (
+                                    {invoiceData.map((item, index) => (
                                         <ListItem key={index} divider>
                                             <ListItemText
-                                                primary={`Date: ${item.date}`}
-                                                secondary={`Temperature: ${item.temperatureC}°C | Summary: ${item.summary}`}
+                                                primary={`Invoice: ${item.invoice_number} | Customer: ${item.customer_name}`}
+                                                secondary={`Amount: ${item.amount} | Issue Date: ${item.issue_date.split("T")[0]} | Due Date: ${item.due_date.split("T")[0]} | Status: ${item.status}`}
                                             />
                                         </ListItem>
                                     ))}

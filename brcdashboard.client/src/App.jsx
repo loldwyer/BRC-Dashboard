@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import {
     AppBar,
     Toolbar,
@@ -6,11 +6,25 @@ import {
     Container,
     Grid,
     Paper,
+    CircularProgress,
+    Alert,
+    Box,
+    Card,
+    CardContent,
+    Chip,
+    Divider,
+    Stack,
+    TableRow,
+    TableCell,
+    Table,
+    TableHead,
+    TableBody,
+    TableContainer,
+    TablePagination,
     List,
     ListItem,
     ListItemText,
-    CircularProgress,
-    Alert,
+
 } from "@mui/material";
 
 export default function App() {
@@ -35,20 +49,54 @@ export default function App() {
                 setLoading(false);
             });
     }, []);
-    const totalRevenue = invoiceData.reduce((total, item) => total + item.amount, 0);
-    const uniqueCustomers = new Set(invoiceData.map((item) => item.customer_name)).size;
+    const totalRevenue = useMemo(() => {
+        return invoiceData.reduce((total, item) => total + Number(item.amount || 0), 0); //Number () to ensure amount is treated as a number, defaulting to 0 if undefined
+    }, [invoiceData]);
+    const uniqueCustomers = useMemo(() => {
+        return new Set(invoiceData.map((item) => item.customer_name)).size;
+    }, [invoiceData]);
+
+    const paidInvoices = useMemo(() => { 
+        return invoiceData.filter((item) => item.status?.toLowerCase === "paid").length;
+    }, [invoiceData]);
+
+    const euroCurrency = (value) => {
+        return new Intl.NumberFormat("en-IE", {
+            style: "currency",
+            currency: "EUR",
+        }).format(value || 0);
+    };
+
+    const formatDate = (value) => {
+        if (!value) return "-";
+        return value.split("T")[0]; // Assuming date is in ISO format, this will return just the date part")
+    };
+    const getPaymentStatusColor = (status) => {
+        const statusValue = status?.toLowerCase() || "";
+        if (statusValue === "paid") return "success";
+        if (statusValue === "overdue") return "error";
+        if (statusValue === "pending") return "warning";
+        return "default";
+    };
+
 
     return (
         <>
-            <AppBar position="static">
+            <AppBar position="static" elevation={1}>
                 <Toolbar>
                     <Typography variant="h6">BRC Dashboard</Typography>
                 </Toolbar>
             </AppBar>
 
-            <Container sx={{ mt: 4 }}>
+            <Box sx={{
+                minHeight: "100vh",
+                background: "linear-gradient(180deg, #f5f7fa 0%, #c3cfe2 100%)", 
+                py:4,
+            } }
+            >
+            <Container maxWidth="xl">
                 <Grid container spacing={3}>
-                    <Grid item xs={12} md={4}>
+                        <Grid item xs={12} sm={6} md={3 }>
                         <Paper sx={{ p: 3 }}>
                             <Typography variant="h6">Invoices</Typography>
                             <Typography>Total invoices: {invoiceData.length}</Typography>
@@ -64,8 +112,14 @@ export default function App() {
 
                     <Grid item xs={12} md={4}>
                         <Paper sx={{ p: 3 }}>
-                            <Typography variant="h6">Revenue</Typography>
-                            <Typography>EURO {totalRevenue}</Typography>
+                                <Typography variant="h6">Revenue</Typography>
+                                <Typography variant="h5" fontWeight="bold">{euroCurrency(totalRevenue)}</Typography>
+                        </Paper>
+                        </Grid>
+                    <Grid item xs={12} sm={6} md={3}>
+                        <Paper sx={{ p: 3 }}>
+                                <Typography variant="subtitle2" color="text.secondary">Paid Invoices</Typography>
+                                <Typography variant="h5" fontWeight="bold">{paidInvoices}</Typography>
                         </Paper>
                     </Grid>
 
@@ -85,7 +139,17 @@ export default function App() {
                                         <ListItem key={index} divider>
                                             <ListItemText
                                                 primary={`Invoice: ${item.invoice_number} | Customer: ${item.customer_name}`}
-                                                secondary={`Amount: ${item.amount} | Issue Date: ${item.issue_date.split("T")[0]} | Due Date: ${item.due_date.split("T")[0]} | Status: ${item.status}`}
+                                                secondary={
+                                                    <>
+                                                        Amount: ${item.amount} |
+                                                        Issue Date: ${formatDate(item.issue_date)}
+                                                        | Due Date: ${formatDate(item.due_date)}
+                                                        | Status: {""}
+                                                        <Chip label={item.status}
+                                                            color={getPaymentStatusColor(item.status)} size="small"
+                                                        />
+                                                    </>
+                                                }  
                                             />
                                         </ListItem>
                                     ))}
@@ -94,7 +158,8 @@ export default function App() {
                         </Paper>
                     </Grid>
                 </Grid>
-            </Container>
+                </Container>
+            </Box>
         </>
     );
 }

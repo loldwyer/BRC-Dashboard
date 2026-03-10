@@ -19,7 +19,7 @@ export default function App() {
     const [error, setError] = useState("");
 
     useEffect(() => {
-        fetch("http://localhost:5142/api/invoices") //find in server properties -> applicationUrl for https in launchSettings.json
+        fetch("/api/invoices") //find in server properties -> applicationUrl for https in launchSettings.json
             .then((response) => {
                 if (!response.ok) {
                     throw new Error("Failed to fetch invoice data from the API.");  
